@@ -7,7 +7,11 @@ CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 :root{--ink:#0e1b2c;--muted:#5b6b7f;--line:#e3e8ee;--card:#ffffff;--bg:#f3f5f8;--accent:#0d5c63;--good:#1e8e5a;--warn:#c98a1b;--bad:#d64545;}
-html, body, .stApp, [class*="st-"] {font-family:'DM Sans',system-ui,sans-serif;}
+.stApp, .stApp p, .stApp label, .stApp li, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6,
+.stApp button, .stApp input, .stApp textarea, .stApp [data-baseweb="tab"], .stApp [data-testid="stMarkdownContainer"],
+.stApp [data-testid="stMetricLabel"], .stApp [data-testid="stCaptionContainer"] {font-family:'DM Sans',system-ui,sans-serif;}
+.stApp [data-testid="stMetricValue"], .stApp .stNumberInput input, .stApp .stTextInput input, .stApp .stTextArea textarea,
+.stApp .kcard .big, .stApp .ticks {font-family:'IBM Plex Mono',monospace;}
 .stApp{background:var(--bg);color:var(--ink);}
 .block-container{padding-top:1.4rem;padding-bottom:3rem;max-width:1280px;}
 h1,h2,h3,h4{letter-spacing:-.015em;font-weight:700;color:var(--ink);}
