@@ -1,2 +1,11 @@
-name,ticker,year,risk_class,revenue,ebit,ebitda,net_income,interest_expense,total_assets,total_liabilities,total_debt,cash,current_assets,current_liabilities,retained_earnings,market_cap,operating_cashflow,outcome
-Microsoft,MSFT,2026,A (sehr solide),331839,168985,207519,133749,3051,758376,315989,128808,20935,207710,168825,328265,3898000,182935,keine Notlage
+name,ticker,year,risk_class,revenue,ebit,ebitda,net_income,interest_expense,total_assets,total_liabilities,total_debt,cash,current_assets,current_liabilities,retained_earnings,operating_cashflow,market_cap,outcome
+Microsoft Corporation,MSFT,2026,A (sehr solide),331839.0,168985.0,207519.0,133749.0,3051.0,758376.0,315989.0,56826.0,20935.0,207710.0,168825.0,328265.0,182935.0,3883899.81,keine Notlage
+Coca-Cola Company (The),KO,2025,A (sehr solide),47941.0,17652.0,18702.0,13107.0,1654.0,104816.0,70541.0,45492.0,10270.0,31044.0,21281.0,80382.0,7408.0,419177.37,keine Notlage
+Johnson & Johnson,JNJ,2025,A (sehr solide),94193.0,33552.0,41055.0,26804.0,971.0,199210.0,117666.0,47933.0,19709.0,55624.0,54126.0,,24530.0,682520.61,keine Notlage
+AT&T Inc.,T,2025,BBB (mittel),125648.0,33811.0,54697.0,21953.0,6804.0,420198.0,291706.0,155043.0,18234.0,48732.0,53780.0,15768.0,40284.0,149414.99,keine Notlage
+Ford Motor Company,F,2025,BB (mittel),187267.0,-10497.0,3638.0,-8182.0,1333.0,289160.0,253180.0,165738.0,23356.0,123487.0,114890.0,22508.0,21282.0,47519.29,keine Notlage
+Boeing Company (The),BA,2025,B (angeschlagen),89463.0,5406.0,7359.0,2235.0,2771.0,168235.0,162778.0,54433.0,10921.0,128459.0,108115.0,17252.0,1065.0,135944.79,"Verlust, kein Ausfall"
+"United Airlines Holdings, Inc.",UAL,2025,B (angeschlagen),59070.0,5473.0,8412.0,3353.0,1167.0,76448.0,61166.0,31036.0,5942.0,16857.0,26133.0,10092.0,8431.0,36144.5,keine Notlage
+"AMC Entertainment Holdings, Inc",AMC,2025,CCC (kritisch),4848.9,-97.7,215.7,-632.4,530.2,8017.8,9912.6,8136.0,428.5,730.5,1772.3,-8979.2,-119.8,2981.3,Notlage
+"Beyond Meat, Inc.",BYND,2025,CCC (kritisch),275.5,233.13,265.9,178.01,14.03,614.75,615.74,507.97,203.89,341.48,74.92,-1022.51,-144.93,101.47,Notlage
+Carvana Co.,CVNA,2025,B (angeschlagen),20322.0,-385.0,-110.0,1407.0,505.0,13201.0,8998.0,5521.0,2327.0,6549.0,1519.0,-9.0,1036.0,105686.76,keine Notlage
