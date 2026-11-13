@@ -15,6 +15,7 @@ Hinweis: yfinance liefert meist nur 4 Jahresabschlüsse pro Firma -> 3 Beobachtu
 Je mehr Ticker, desto besser (Empfehlung: 300+ aus S&P 500 / STOXX 600 / Russell 2000).
 """
 import sys
+import time
 from pathlib import Path
 
 import numpy as np
@@ -22,6 +23,18 @@ import pandas as pd
 import yfinance as yf
 
 OUT = Path(__file__).resolve().parents[1] / "data" / "panel.csv"
+
+def load_tickers():
+    """Liest src/tickers.txt (Kommentare mit #), sonst die kurze Liste unten."""
+    p = Path(__file__).resolve().parent / "tickers.txt"
+    if not p.exists():
+        return DEFAULT_TICKERS
+    out = []
+    for line in p.read_text(encoding="utf-8").splitlines():
+        if not line.strip().startswith("#"):
+            out += line.split()
+    return list(dict.fromkeys(out))
+
 
 DEFAULT_TICKERS = [
     "AAPL", "MSFT", "F", "GM", "BA", "T", "VZ", "KO", "PEP", "XOM", "CVX", "WMT",
@@ -83,13 +96,20 @@ def main(tickers):
             f = company_frame(tk)
             print(f"{tk:10s} {len(f)} Beobachtungen")
             frames.append(f)
+            time.sleep(0.4)  # Yahoo nicht überlasten
         except Exception as e:  # einzelne Ticker dürfen fehlschlagen
             print(f"{tk:10s} FEHLER: {e}")
+    frames = [f for f in frames if len(f)]
+    if not frames:
+        sys.exit("Keine Daten geladen. Internetverbindung oder Yahoo prüfen.")
     panel = pd.concat(frames, ignore_index=True)
     OUT.parent.mkdir(exist_ok=True)
     panel.to_csv(OUT, index=False)
-    print(f"\n{len(panel)} Zeilen -> {OUT} | Notlage-Rate: {panel['distress_next_year'].mean():.1%}")
+    n_pos = int(panel["distress_next_year"].sum())
+    print(f"\n{len(panel)} Zeilen, {panel['company'].nunique()} Firmen -> {OUT} | Notlagen: {n_pos} ({n_pos / len(panel):.1%})")
+    if n_pos < 20:
+        print("WARNUNG: sehr wenige Notlagen, das Modell wird unzuverlässig.")
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:] or DEFAULT_TICKERS)
+    main(sys.argv[1:] or load_tickers())
