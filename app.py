@@ -91,6 +91,16 @@ if pending:
             st.session_state[f"in-{c}"] = float(pending[c])
 
 # ---------- Seitenleiste: Annahmen ----------
+@st.cache_data(ttl=3600, show_spinner=False)
+def cached_fetch(ticker: str):
+    return fetch_latest(ticker)
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def cached_search(query: str):
+    return search_company(query)
+
+
 with st.sidebar:
     st.header("Firma")
     with st.expander("Firma suchen und Live-Daten laden", expanded=False):
@@ -159,16 +169,6 @@ model = Blend(gb, lrb, MODE)
 def score(raw: pd.DataFrame):
     X = compute_features(raw)
     return X, model.predict_proba(X)[:, 1]
-
-
-@st.cache_data(ttl=3600, show_spinner=False)
-def cached_fetch(ticker: str):
-    return fetch_latest(ticker)
-
-
-@st.cache_data(ttl=3600, show_spinner=False)
-def cached_search(query: str):
-    return search_company(query)
 
 
 ui.hero("Wie wahrscheinlich gerät ein Unternehmen im Folgejahr in Zahlungsnot? Erklärbares Machine Learning, "
