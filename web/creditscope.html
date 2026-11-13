@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CreditScope</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: Eingabespalte links, Ergebnis und Erklärung rechts; auf dem Handy untereinander */
+:root{
+  --bg:#f4f5f2; --panel:#ffffff; --ink:#1b2430; --muted:#5d6877; --line:#dde1e6;
+  --accent:#1f4e79; --good:#2e7d4f; --warn:#b7791f; --bad:#b3372c;
+  --font-body:"IBM Plex Sans",system-ui,sans-serif; --font-num:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12171d; --panel:#1b222b; --ink:#e6eaef; --muted:#97a3b2; --line:#2c3541;
+  --accent:#6aa5da; --good:#5cb980; --warn:#e0a94a; --bad:#e2766c; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#12171d; --panel:#1b222b; --ink:#e6eaef; --muted:#97a3b2; --line:#2c3541;
+  --accent:#6aa5da; --good:#5cb980; --warn:#e0a94a; --bad:#e2766c; color-scheme:dark;}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);line-height:1.5;padding:20px 16px 40px}
+.wrap{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+h1{font-size:26px;margin:0;letter-spacing:-.01em;text-wrap:balance}
+h2{font-size:13px;margin:0 0 10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+.sub{color:var(--muted);margin:4px 0 0;max-width:65ch}
+.note{border:1px solid var(--warn);border-left-width:4px;border-radius:6px;padding:10px 12px;font-size:14px;background:var(--panel)}
+.grid{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:16px;align-items:start}
+@media(max-width:820px){.grid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+.presets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+button{font:inherit;font-size:14px;padding:7px 12px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{display:flex;flex-direction:column;font-size:12px;color:var(--muted);gap:3px}
+input[type=number]{font-family:var(--font-num);font-size:14px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);width:100%}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{border:1px solid var(--line);border-radius:8px;padding:12px}
+.kpi .l{font-size:12px;color:var(--muted)}
+.kpi .v{font-family:var(--font-num);font-size:30px;font-weight:500;line-height:1.2;font-variant-numeric:tabular-nums}
+.kpi .s{font-size:13px;color:var(--muted)}
+.bar{height:10px;border-radius:5px;background:linear-gradient(90deg,var(--good),var(--warn) 45%,var(--bad));position:relative;margin:14px 0 6px}
+.bar i{position:absolute;top:-4px;width:4px;height:18px;border-radius:2px;background:var(--ink);transform:translateX(-2px)}
+.scale{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-family:var(--font-num)}
+.contrib{display:flex;flex-direction:column;gap:6px}
+.row{display:grid;grid-template-columns:minmax(120px,190px) 1fr 56px;gap:10px;align-items:center;font-size:13px}
+.track{position:relative;height:16px}
+.track:before{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line)}
+.fill{position:absolute;top:2px;height:12px;border-radius:2px}
+.num{font-family:var(--font-num);text-align:right;font-variant-numeric:tabular-nums;font-size:12px}
+.legend{font-size:12px;color:var(--muted);margin:0 0 10px}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td.n{font-family:var(--font-num);text-align:right;font-variant-numeric:tabular-nums}
+th{color:var(--muted);font-weight:500}
+.foot{font-size:13px;color:var(--muted)}
+.pill{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;border:1px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>CreditScope</h1>
+    <p class="sub">Wie wahrscheinlich gerät ein Unternehmen im Folgejahr in Zahlungsnot? Werte aus dem Jahresabschluss eingeben, das Modell zeigt Wahrscheinlichkeit, Rating und die Treiber.</p>
+  </header>
+  <div class="note" id="note"></div>
+  <div class="grid">
+    <section class="card">
+      <h2>Jahresabschluss (Mio.)</h2>
+      <div class="presets" id="presets"></div>
+      <div class="fields" id="fields"></div>
+    </section>
+    <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+      <section class="card">
+        <div class="kpis">
+          <div class="kpi"><div class="l">Ausfallwahrscheinlichkeit</div><div class="v" id="pd">–</div><div class="s">im Folgejahr</div></div>
+          <div class="kpi"><div class="l">Rating (intern)</div><div class="v" id="rating">–</div><div class="s" id="ratingnote">&nbsp;</div></div>
+          <div class="kpi"><div class="l">Altman Z (Vergleich)</div><div class="v" id="z">–</div><div class="s" id="zzone">&nbsp;</div></div>
+        </div>
+        <div class="bar" aria-hidden="true"><i id="marker"></i></div>
+        <div class="scale"><span>0 %</span><span>5 %</span><span>10 %</span><span>20 %</span><span>40 %+</span></div>
+      </section>
+      <section class="card">
+        <h2>Was treibt das Ergebnis?</h2>
+        <p class="legend">Beitrag jeder Kennzahl zum Risiko (Log-Odds). Rechts erhöht, links senkt das Risiko gegenüber einem durchschnittlichen Unternehmen.</p>
+        <div class="contrib" id="contrib"></div>
+      </section>
+      <section class="card">
+        <h2>Kennzahlen</h2>
+        <div class="tablewrap"><table>
+          <thead><tr><th>Kennzahl</th><th style="text-align:right">Wert</th><th style="text-align:right">Ø Stichprobe</th><th>Bedeutung</th></tr></thead>
+          <tbody id="tbody"></tbody></table></div>
+      </section>
+    </div>
+  </div>
+  <p class="foot" id="foot"></p>
+</div>
+<script>
+const MODEL = {"features": ["debt_to_equity", "net_debt_to_ebitda", "interest_coverage", "ebit_margin", "roa", "current_ratio", "cfo_to_debt", "retained_earnings_to_assets", "log_assets"], "labels": {"debt_to_equity": "Verschuldungsgrad (Debt/Equity)", "net_debt_to_ebitda": "Net Debt / EBITDA", "interest_coverage": "Zinsdeckung (EBIT/Zinsen)", "ebit_margin": "EBIT-Marge", "roa": "Return on Assets", "current_ratio": "Current Ratio", "cfo_to_debt": "Operativer CF / Schulden", "retained_earnings_to_assets": "Gewinnrücklagen / Bilanzsumme", "log_assets": "Größe (log Bilanzsumme)"}, "mean": [1.7247809119396649, 5.166110632871359, 6.047510075705987, 0.06897318294066875, 0.034693148031683455, 1.9632669423762479, 0.29231783757299007, 0.12010482291662913, 7.975063287406408], "scale": [2.4890608939974035, 5.370117004409387, 10.879022523905972, 0.0917259608544007, 0.07319606659394155, 1.1733005769780303, 0.5637046664333433, 0.20199183344353275, 1.3857504342140485], "coef": [0.490979188954799, 0.8191006107610875, -0.196764537955733, -0.5621124789535898, -0.1621979691233539, -0.1853443129918218, -0.17528694627393618, -0.2126590922226022, -0.16898479857853915], "intercept": -3.83605137185389, "metrics": {"auc": 0.8991341593199407, "brier": 0.05692819359607196}, "base_rate": 0.07775, "data_source": "synthetic"};
+const RAW = [
+ ["revenue","Umsatz"],["ebit","EBIT"],["ebitda","EBITDA"],["net_income","Jahresüberschuss"],
+ ["interest_expense","Zinsaufwand"],["total_assets","Bilanzsumme"],["total_liabilities","Verbindlichkeiten gesamt"],
+ ["total_debt","Finanzschulden"],["cash","Zahlungsmittel"],["current_assets","Umlaufvermögen"],
+ ["current_liabilities","Kurzfr. Verbindlichkeiten"],["retained_earnings","Gewinnrücklagen"],
+ ["market_cap","Marktkapitalisierung"],["operating_cashflow","Operativer Cashflow"]];
+const PRESETS = {
+ "Solides Unternehmen":{revenue:5000,ebit:650,ebitda:900,net_income:450,interest_expense:60,total_assets:6000,total_liabilities:3000,total_debt:1200,cash:700,current_assets:2200,current_liabilities:1300,retained_earnings:1500,market_cap:7000,operating_cashflow:800},
+ "Angeschlagenes Unternehmen":{revenue:2000,ebit:40,ebitda:140,net_income:-60,interest_expense:95,total_assets:3000,total_liabilities:2700,total_debt:1900,cash:90,current_assets:700,current_liabilities:1100,retained_earnings:-250,market_cap:400,operating_cashflow:60}};
+const INFO = {
+ debt_to_equity:"Fremdkapital im Verhältnis zum Eigenkapital",
+ net_debt_to_ebitda:"Jahre EBITDA, die für die Tilgung der Nettoschulden nötig wären",
+ interest_coverage:"Wie oft der Gewinn die Zinsen deckt",
+ ebit_margin:"Operativer Gewinn pro Umsatz",
+ roa:"Jahresüberschuss im Verhältnis zur Bilanzsumme",
+ current_ratio:"Kurzfristige Liquidität",
+ cfo_to_debt:"Cashflow-Deckung der Finanzschulden",
+ retained_earnings_to_assets:"Kumulierte Gewinne im Verhältnis zur Bilanzsumme",
+ log_assets:"Größere Firmen fallen seltener aus"};
+
+const div=(a,b)=> b===0?NaN:a/b;
+const clip=(x,lo,hi)=> Number.isNaN(x)?x:Math.min(hi,Math.max(lo,x));
+function features(r){
+  const eq=r.total_assets-r.total_liabilities, nd=r.total_debt-r.cash;
+  return {
+    debt_to_equity: clip(eq>0?div(r.total_debt,eq):10,0,10),
+    net_debt_to_ebitda: clip(r.ebitda>0?div(nd,r.ebitda):15,-5,15),
+    interest_coverage: clip(r.interest_expense>0?div(r.ebit,r.interest_expense):50,-10,50),
+    ebit_margin: clip(div(r.ebit,r.revenue),-1,1),
+    roa: clip(div(r.net_income,r.total_assets),-.5,.5),
+    current_ratio: clip(div(r.current_assets,r.current_liabilities),0,6),
+    cfo_to_debt: clip(r.total_debt>0?div(r.operating_cashflow,r.total_debt):5,-1,5),
+    retained_earnings_to_assets: clip(div(r.retained_earnings,r.total_assets),-2,1),
+    log_assets: clip(Math.log(Math.max(r.total_assets,1)),0,20)};
+}
+function altmanZ(r){
+  const ta=r.total_assets, tl=r.total_liabilities, wc=r.current_assets-r.current_liabilities;
+  return 1.2*wc/ta+1.4*r.retained_earnings/ta+3.3*r.ebit/ta+0.6*r.market_cap/tl+1.0*r.revenue/ta;
+}
+function rating(p){
+  const b=[[.005,"A"],[.015,"BBB"],[.04,"BB"],[.10,"B"],[.25,"CCC"]];
+  for(const [l,n] of b) if(p<l) return n; return "D-Gefahr";
+}
+function predict(r){
+  const f=features(r); let z=MODEL.intercept; const contrib=[];
+  MODEL.features.forEach((k,i)=>{
+    const s=Number.isNaN(f[k])?0:(f[k]-MODEL.mean[i])/MODEL.scale[i];
+    const c=MODEL.coef[i]*s; contrib.push({k,c,v:f[k]}); z+=c;});
+  return {p:1/(1+Math.exp(-z)),f,contrib,z:altmanZ(r)};
+}
+function fmt(x,d=2){return Number.isNaN(x)?"–":x.toLocaleString("de-DE",{minimumFractionDigits:d,maximumFractionDigits:d});}
+
+const state={...PRESETS["Solides Unternehmen"]};
+function render(){
+  const o=predict(state), p=o.p;
+  document.getElementById("pd").textContent=fmt(p*100,1)+" %";
+  const rt=rating(p), rEl=document.getElementById("rating");
+  rEl.textContent=rt; rEl.style.color=p<.015?"var(--good)":p<.10?"var(--warn)":"var(--bad)";
+  document.getElementById("ratingnote").textContent=p<.015?"geringes Risiko":p<.10?"erhöhtes Risiko":"hohes Risiko";
+  document.getElementById("z").textContent=fmt(o.z,2);
+  document.getElementById("zzone").textContent=o.z>2.99?"sichere Zone":o.z>1.81?"Grauzone":"Gefahrenzone";
+  const stops=[[0,0],[.05,25],[.10,50],[.20,75],[.40,100]]; let pos=100;
+  for(let i=1;i<stops.length;i++) if(p<=stops[i][0]){const [a,pa]=stops[i-1],[b,pb]=stops[i]; pos=pa+(p-a)/(b-a)*(pb-pa); break;}
+  document.getElementById("marker").style.left=pos+"%";
+  const max=Math.max(1,...o.contrib.map(c=>Math.abs(c.c)));
+  const sorted=[...o.contrib].sort((a,b)=>Math.abs(b.c)-Math.abs(a.c));
+  document.getElementById("contrib").innerHTML=sorted.map(c=>{
+    const w=Math.abs(c.c)/max*50, left=c.c>=0?50:50-w, col=c.c>=0?"var(--bad)":"var(--good)";
+    return `<div class="row"><span>${MODEL.labels[c.k]}</span><div class="track"><div class="fill" style="left:${left}%;width:${w}%;background:${col}"></div></div><span class="num">${c.c>=0?"+":""}${fmt(c.c,2)}</span></div>`;}).join("");
+  document.getElementById("tbody").innerHTML=MODEL.features.map((k,i)=>
+    `<tr><td>${MODEL.labels[k]}</td><td class="n">${fmt(o.f[k],3)}</td><td class="n">${fmt(MODEL.mean[i],3)}</td><td>${INFO[k]}</td></tr>`).join("");
+}
+function build(){
+  const pr=document.getElementById("presets");
+  Object.keys(PRESETS).forEach((n,i)=>{
+    const b=document.createElement("button"); b.textContent=n; b.type="button";
+    if(i===0)b.classList.add("on");
+    b.onclick=()=>{Object.assign(state,PRESETS[n]);
+      pr.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));
+      RAW.forEach(([k])=>document.getElementById("in-"+k).value=state[k]); render();};
+    pr.appendChild(b);});
+  document.getElementById("fields").innerHTML=RAW.map(([k,l])=>
+    `<label for="in-${k}">${l}<input type="number" id="in-${k}" value="${state[k]}" step="10"></label>`).join("");
+  RAW.forEach(([k])=>document.getElementById("in-"+k).addEventListener("input",e=>{
+    const v=parseFloat(e.target.value); state[k]=Number.isNaN(v)?0:v;
+    document.querySelectorAll("#presets button").forEach(x=>x.classList.remove("on")); render();}));
+  const syn=MODEL.data_source==="synthetic";
+  document.getElementById("note").textContent=syn
+    ?"Das Modell ist mit synthetischen Demo-Daten trainiert. Die Zahlen zeigen, wie das Tool arbeitet, und sind keine echte Bonitätsbewertung."
+    :"Modell trainiert mit echten Unternehmensdaten (Proxy: Notlage im Folgejahr).";
+  document.getElementById("foot").textContent=
+    `Logistische Regression, AUC ${fmt(MODEL.metrics.auc,3)} auf ungesehenen Firmen, Notlagen-Rate in den Daten ${fmt(MODEL.base_rate*100,1)} %. Das Altman Z ist nur ein Vergleichswert. Die Python-Version nutzt zusätzlich Gradient Boosting mit SHAP.`;
+}
+build(); render();
+</script>
+</body>
+</html>

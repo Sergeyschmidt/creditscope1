@@ -1,0 +1,64 @@
+{
+  "features": [
+    "debt_to_equity",
+    "net_debt_to_ebitda",
+    "interest_coverage",
+    "ebit_margin",
+    "roa",
+    "current_ratio",
+    "cfo_to_debt",
+    "retained_earnings_to_assets",
+    "log_assets"
+  ],
+  "labels": {
+    "debt_to_equity": "Verschuldungsgrad (Debt/Equity)",
+    "net_debt_to_ebitda": "Net Debt / EBITDA",
+    "interest_coverage": "Zinsdeckung (EBIT/Zinsen)",
+    "ebit_margin": "EBIT-Marge",
+    "roa": "Return on Assets",
+    "current_ratio": "Current Ratio",
+    "cfo_to_debt": "Operativer CF / Schulden",
+    "retained_earnings_to_assets": "Gewinnr\u00fccklagen / Bilanzsumme",
+    "log_assets": "Gr\u00f6\u00dfe (log Bilanzsumme)"
+  },
+  "mean": [
+    1.7247809119396649,
+    5.166110632871359,
+    6.047510075705987,
+    0.06897318294066875,
+    0.034693148031683455,
+    1.9632669423762479,
+    0.29231783757299007,
+    0.12010482291662913,
+    7.975063287406408
+  ],
+  "scale": [
+    2.4890608939974035,
+    5.370117004409387,
+    10.879022523905972,
+    0.0917259608544007,
+    0.07319606659394155,
+    1.1733005769780303,
+    0.5637046664333433,
+    0.20199183344353275,
+    1.3857504342140485
+  ],
+  "coef": [
+    0.490979188954799,
+    0.8191006107610875,
+    -0.196764537955733,
+    -0.5621124789535898,
+    -0.1621979691233539,
+    -0.1853443129918218,
+    -0.17528694627393618,
+    -0.2126590922226022,
+    -0.16898479857853915
+  ],
+  "intercept": -3.83605137185389,
+  "metrics": {
+    "auc": 0.8991341593199407,
+    "brier": 0.05692819359607196
+  },
+  "base_rate": 0.07775,
+  "data_source": "synthetic"
+}

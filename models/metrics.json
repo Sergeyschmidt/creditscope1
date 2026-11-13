@@ -1,0 +1,14 @@
+{
+  "n_train": 3000,
+  "n_test": 1000,
+  "base_rate": 0.07775,
+  "gradient_boosting": {
+    "auc": 0.8768903312267609,
+    "brier": 0.06242946427972787
+  },
+  "logistic_regression": {
+    "auc": 0.8991341593199407,
+    "brier": 0.05692819359607196
+  },
+  "data_source": "synthetic"
+}
