@@ -182,6 +182,16 @@ with tab1:
         ui.kpi_cards(pdv, rating, z, zone)
         st.plotly_chart(viz.drivers_bar(LABELS_F, drv[0]), key="drivers_chart", on_select=pick_chart,
                         selection_mode="points", width="stretch")
+        st.markdown("##### Covenant-Monitor")
+        _cv = [("Net Debt / EBITDA", float(X["net_debt_to_ebitda"].iloc[0]), 4.0, "max", "{:.1f}x"),
+               ("Zinsdeckung", float(X["interest_coverage"].iloc[0]), 3.0, "min", "{:.1f}x"),
+               ("Debt / Equity", float(X["debt_to_equity"].iloc[0]), 2.0, "max", "{:.2f}")]
+        _cc = st.columns(3)
+        for _c, (_n, _v, _t, _k, _f) in zip(_cc, _cv):
+            _ok = _v <= _t if _k == "max" else _v >= _t
+            _c.metric(_n, _f.format(_v), ("OK" if _ok else "Verletzt") + f" ({'≤' if _k == 'max' else '≥'} {_t:g})",
+                      delta_color="normal" if _ok else "inverse")
+        st.caption("Typische Kreditvertragsgrenzen (Annahme). Eine Verletzung ist ein Frühwarnsignal, noch kein Ausfall.")
 
     st.markdown("#### Kennzahlen: Zahl anklicken, um Details und Grafiken zu sehen")
     tc = st.columns(3)
@@ -346,6 +356,20 @@ with tab4:
     t4.metric("Korrekt als gesund", f"{tn}")
     st.caption("Niedriger Schwellenwert: weniger Übersehenes, mehr Fehlalarme. Die Wahl hängt davon ab, was ein Ausfall im Vergleich zu einer unnötigen Prüfung kostet.")
 
+    ref_p = ROOT / "data" / "reference_firms.csv"
+    if ref_p.exists():
+        st.markdown("#### Realitätscheck an echten Firmen")
+        rf_df = pd.read_csv(ref_p)
+        rf_p, _ = predict_many(model, rf_df[RAW_COLUMNS].fillna(0).to_dict("records"))
+        rf_z = altman_z(rf_df[RAW_COLUMNS].fillna(0))
+        show = pd.DataFrame({"Firma": rf_df["name"], "Jahr": rf_df["year"], "Risikoklasse (Annahme)": rf_df["risk_class"],
+                             "PD": [f"{x:.1%}" for x in rf_p], "Rating": [pd_to_rating(x) for x in rf_p],
+                             "Altman Z": rf_z.round(2).values,
+                             "Tatsächlicher Ausgang": rf_df["outcome"] if "outcome" in rf_df else ""})
+        st.dataframe(show.sort_values("PD", ascending=False, key=lambda s: s.str.rstrip("%").astype(float)),
+                     hide_index=True, width="stretch")
+        st.caption("Sehr kleine Stichprobe: ein Plausibilitätstest, kein statistischer Beweis. Die Ausgänge sind eigene Einordnungen.")
+
 # =====================================================================================
 with tab5:
     client = get_client()
@@ -423,4 +447,16 @@ Aufteilung nach Unternehmen (Train {metrics['n_train']} / Test {metrics['n_test'
 **Expected Loss:** PD × LGD × Exposure. Die LGD ist eine Annahme der Seitenleiste, kein geschätzter Wert.
 
 **Grenzen:** Proxy statt echter Kreditausfälle, wenige Jahre pro Firma, keine Branchen- oder Makrovariablen, Altman Z nur als Vergleich. Die Ergebnisse sind kein Ersatz für eine Bonitätsprüfung.
+
+**Model Card**
+
+| | |
+|---|---|
+| Zweck | Frühwarnung und Priorisierung, keine automatische Kreditentscheidung |
+| Zielgröße | Zinsdeckung < 1 oder negatives Eigenkapital im Folgejahr (Proxy) |
+| Eingabe | 9 Bilanz- und GuV-Kennzahlen eines Jahres |
+| Modelle | Gradient Boosting, logistische Regression, Ensemble |
+| Validierung | Split nach Firma, ROC, Kalibrierung, Vergleich mit Altman Z |
+| Bekannte Schwächen | Kein Branchenbezug, keine Makrodaten, Proxy statt echter Ausfälle, Banken und Versicherer ungeeignet |
+| Nicht geeignet für | Einzelne Kreditentscheidungen ohne menschliche Prüfung |
 """)
