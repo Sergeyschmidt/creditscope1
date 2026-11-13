@@ -68,3 +68,17 @@ def fetch_latest(ticker: str) -> dict:
         "currency": info.get("financialCurrency") or info.get("currency") or "?",
         "missing": [k for k, v in raw.items() if v is None],
     }
+
+
+def search_company(query: str, limit: int = 8) -> list:
+    """Sucht Aktien per Firmenname oder Ticker. Rückgabe: Liste (Ticker, Name, Börse)."""
+    import yfinance as yf
+
+    quotes = yf.Search(query, max_results=limit).quotes or []
+    out = []
+    for q in quotes:
+        if q.get("quoteType") not in (None, "EQUITY"):
+            continue
+        name = q.get("shortname") or q.get("longname") or q["symbol"]
+        out.append((q["symbol"], name, q.get("exchDisp", "")))
+    return out

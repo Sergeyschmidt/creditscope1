@@ -18,7 +18,7 @@ from analysis import (SCENARIOS, Blend, apply_shocks, feature_curve, heatmap_gri
                       score_portfolio)
 from features import (FEATURE_BETTER, FEATURE_FORMULA, FEATURE_INFO, FEATURES, RAW_COLUMNS,  # noqa: E402
                       altman_z, compute_features, pd_to_rating)
-from data_live import fetch_latest  # noqa: E402
+from data_live import fetch_latest, search_company  # noqa: E402
 from llm import extract_financials, get_client, get_model, write_memo  # noqa: E402
 
 st.set_page_config(page_title="CreditScope", page_icon="📉", layout="wide")
@@ -118,6 +118,11 @@ def cached_fetch(ticker: str):
     return fetch_latest(ticker)
 
 
+@st.cache_data(ttl=3600, show_spinner=False)
+def cached_search(query: str):
+    return search_company(query)
+
+
 ui.hero("Wie wahrscheinlich gerät ein Unternehmen im Folgejahr in Zahlungsnot? Erklärbares Machine Learning, "
         "Stresstests und Portfolio-Sicht in einem Werkzeug.",
         ["Gradient Boosting + Regression", "SHAP-Erklärung", "Szenarien", "Claude-API"],
@@ -130,17 +135,29 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
 with tab1:
     left, right = st.columns([1, 1.5])
     with left:
-        with st.expander("Live-Daten per Börsenticker laden", expanded=False):
-            tk = st.text_input("Ticker", placeholder="z. B. SAP.DE, VOW3.DE, AAPL", key="ticker_in")
-            if st.button("Jahresabschluss laden", key="btn_ticker") and tk.strip():
+        with st.expander("Firma suchen und Live-Daten laden", expanded=False):
+            q = st.text_input("Firmenname oder Ticker", placeholder="z. B. Volkswagen, SAP, Tesla", key="ticker_in")
+            cand = []
+            if q.strip():
                 try:
-                    with st.spinner("Daten werden geladen ..."):
-                        live = cached_fetch(tk.strip())
-                    st.session_state["pending_fill"] = live["raw"]
-                    st.session_state["live_meta"] = live
-                    st.rerun()
+                    cand = cached_search(q.strip())
                 except Exception as e:  # noqa: BLE001
-                    st.error(f"Laden fehlgeschlagen: {e}")
+                    st.error(f"Suche fehlgeschlagen: {e}")
+                if not cand:
+                    cand = [(q.strip().upper(), q.strip().upper(), "direkt als Ticker")]
+            if cand:
+                opts = [f"{n} ({s}, {x})" if x else f"{n} ({s})" for s, n, x in cand]
+                sel = st.selectbox("Treffer", opts, key="ticker_hit")
+                tk = cand[opts.index(sel)][0]
+                if st.button("Jahresabschluss laden", key="btn_ticker"):
+                    try:
+                        with st.spinner("Daten werden geladen ..."):
+                            live = cached_fetch(tk)
+                        st.session_state["pending_fill"] = live["raw"]
+                        st.session_state["live_meta"] = live
+                        st.rerun()
+                    except Exception as e:  # noqa: BLE001
+                        st.error(f"Laden fehlgeschlagen: {e}")
             meta = st.session_state.get("live_meta")
             if meta:
                 st.success(f"{meta['name']} ({meta['ticker']}), Geschäftsjahr {meta['year']}, Werte in Mio. {meta['currency']}")
