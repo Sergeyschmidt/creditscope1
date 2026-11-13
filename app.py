@@ -92,6 +92,54 @@ if pending:
 
 # ---------- Seitenleiste: Annahmen ----------
 with st.sidebar:
+    st.header("Firma")
+    with st.expander("Firma suchen und Live-Daten laden", expanded=False):
+        q = st.text_input("Firmenname oder Ticker", placeholder="z. B. Volkswagen, SAP, Tesla", key="ticker_in")
+        cand = []
+        if q.strip():
+            try:
+                cand = cached_search(q.strip())
+            except Exception as e:  # noqa: BLE001
+                st.error(f"Suche fehlgeschlagen: {e}")
+            if not cand:
+                cand = [(q.strip().upper(), q.strip().upper(), "direkt als Ticker")]
+        if cand:
+            opts = [f"{n} ({s}, {x})" if x else f"{n} ({s})" for s, n, x in cand]
+            sel = st.selectbox("Treffer", opts, key="ticker_hit")
+            tk = cand[opts.index(sel)][0]
+            if st.button("Jahresabschluss laden", key="btn_ticker"):
+                try:
+                    with st.spinner("Daten werden geladen ..."):
+                        live = cached_fetch(tk)
+                    st.session_state["pending_fill"] = live["raw"]
+                    st.session_state["live_meta"] = live
+                    st.session_state["last_src"] = "live"
+                    st.rerun()
+                except Exception as e:  # noqa: BLE001
+                    st.error(f"Laden fehlgeschlagen: {e}")
+        meta = st.session_state.get("live_meta")
+        if meta:
+            st.success(f"{meta['name']} ({meta['ticker']}), Geschäftsjahr {meta['year']}, Werte in Mio. {meta['currency']}")
+            if meta["missing"]:
+                st.warning("Nicht verfügbar, bitte selbst ergänzen: " + ", ".join(LABELS[k] for k in meta["missing"]))
+        st.caption("Quelle: Yahoo Finance über yfinance. Werte gegenprüfen, Marktkapitalisierung ist der aktuelle Stand.")
+    ref_path = ROOT / "data" / "reference_firms.csv"
+    if ref_path.exists():
+        with st.expander("Referenzfirmen (echte Abschlüsse)", expanded=False):
+            ref = pd.read_csv(ref_path)
+            lab = [f"{r['name']} ({r['year']}), {r['risk_class']}" for _, r in ref.iterrows()]
+            pick = st.selectbox("Firma", lab, key="ref_pick")
+            row = ref.iloc[lab.index(pick)]
+            if st.button("Diese Firma analysieren", key="btn_ref"):
+                st.session_state["pending_fill"] = {c: float(row[c]) for c in RAW_COLUMNS}
+                st.session_state["ref_meta"] = row.to_dict()
+                st.session_state["last_src"] = "ref"
+                st.rerun()
+            rm = st.session_state.get("ref_meta")
+            if rm:
+                st.caption(f"Geladen: {rm['name']}, Werte in Mio. USD. Tatsächlicher Ausgang im Folgejahr: "
+                           f"{rm.get('outcome', 'unbekannt')}.")
+    st.caption("Gilt für alle Tabs: Analyse, Szenarien, Portfolio und Memo.")
     st.header("Modell")
     MODE_LABEL = st.radio("Scoring-Modell", ["Ensemble (Ø beider Modelle)", "Gradient Boosting", "Logistische Regression"],
                           help="Gradient Boosting rechnet stufenförmig, die logistische Regression glatt. "
@@ -128,6 +176,10 @@ ui.hero("Wie wahrscheinlich gerät ein Unternehmen im Folgejahr in Zahlungsnot? 
         ["Gradient Boosting + Regression", "SHAP-Erklärung", "Szenarien", "Claude-API"],
         "Demo-Daten (synthetisch)" if metrics["data_source"] == "synthetic" else None)
 
+_act = (st.session_state.get("live_meta") or {}).get("name") if st.session_state.get("last_src") == "live" else \
+       (st.session_state.get("ref_meta") or {}).get("name") if st.session_state.get("last_src") == "ref" else None
+if _act:
+    st.markdown(f"**Aktive Firma:** {_act}. Alle Tabs rechnen mit diesen Werten (Eingaben im Analyse-Tab änderbar).")
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
     ["Analyse", "Szenarien & Stress", "Portfolio", "Modellqualität", "KI-Assistent (Claude)", "Methodik"])
 
@@ -135,50 +187,6 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
 with tab1:
     left, right = st.columns([1, 1.5])
     with left:
-        with st.expander("Firma suchen und Live-Daten laden", expanded=False):
-            q = st.text_input("Firmenname oder Ticker", placeholder="z. B. Volkswagen, SAP, Tesla", key="ticker_in")
-            cand = []
-            if q.strip():
-                try:
-                    cand = cached_search(q.strip())
-                except Exception as e:  # noqa: BLE001
-                    st.error(f"Suche fehlgeschlagen: {e}")
-                if not cand:
-                    cand = [(q.strip().upper(), q.strip().upper(), "direkt als Ticker")]
-            if cand:
-                opts = [f"{n} ({s}, {x})" if x else f"{n} ({s})" for s, n, x in cand]
-                sel = st.selectbox("Treffer", opts, key="ticker_hit")
-                tk = cand[opts.index(sel)][0]
-                if st.button("Jahresabschluss laden", key="btn_ticker"):
-                    try:
-                        with st.spinner("Daten werden geladen ..."):
-                            live = cached_fetch(tk)
-                        st.session_state["pending_fill"] = live["raw"]
-                        st.session_state["live_meta"] = live
-                        st.rerun()
-                    except Exception as e:  # noqa: BLE001
-                        st.error(f"Laden fehlgeschlagen: {e}")
-            meta = st.session_state.get("live_meta")
-            if meta:
-                st.success(f"{meta['name']} ({meta['ticker']}), Geschäftsjahr {meta['year']}, Werte in Mio. {meta['currency']}")
-                if meta["missing"]:
-                    st.warning("Nicht verfügbar, bitte selbst ergänzen: " + ", ".join(LABELS[k] for k in meta["missing"]))
-            st.caption("Quelle: Yahoo Finance über yfinance. Werte gegenprüfen, Marktkapitalisierung ist der aktuelle Stand.")
-        ref_path = ROOT / "data" / "reference_firms.csv"
-        if ref_path.exists():
-            with st.expander("Referenzfirmen (echte Abschlüsse)", expanded=False):
-                ref = pd.read_csv(ref_path)
-                lab = [f"{r['name']} ({r['year']}), {r['risk_class']}" for _, r in ref.iterrows()]
-                pick = st.selectbox("Firma", lab, key="ref_pick")
-                row = ref.iloc[lab.index(pick)]
-                if st.button("Diese Firma analysieren", key="btn_ref"):
-                    st.session_state["pending_fill"] = {c: float(row[c]) for c in RAW_COLUMNS}
-                    st.session_state["ref_meta"] = row.to_dict()
-                    st.rerun()
-                rm = st.session_state.get("ref_meta")
-                if rm:
-                    st.caption(f"Geladen: {rm['name']}, Werte in Mio. USD. Tatsächlicher Ausgang im Folgejahr: "
-                               f"{rm.get('outcome', 'unbekannt')}.")
         st.selectbox("Startwerte", list(PRESETS), key="preset", on_change=apply_preset)
         vals = {}
         st.markdown("**Jahresabschluss (Mio.)**")
