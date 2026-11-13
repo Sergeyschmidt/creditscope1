@@ -70,8 +70,15 @@ def fetch_latest(ticker: str) -> dict:
     }
 
 
-def search_company(query: str, limit: int = 8) -> list:
-    """Sucht Aktien per Firmenname oder Ticker. Rückgabe: Liste (Ticker, Name, Börse)."""
+PREFERRED = ("XETRA", "Frankfurt", "NYSE", "NASDAQ", "NasdaqGS", "NasdaqCM", "London", "Paris", "Amsterdam",
+             "Swiss", "Milan", "Madrid", "Toronto", "Tokyo")
+
+
+def search_company(query: str, limit: int = 10) -> list:
+    """Sucht Aktien per Firmenname oder Ticker. Rückgabe: Liste (Ticker, Name, Börse).
+
+    Freiverkehr/OTC wird ausgeblendet, große Börsen kommen zuerst, weil dort die Abschlussdaten vollständig sind.
+    """
     import yfinance as yf
 
     quotes = yf.Search(query, max_results=limit).quotes or []
@@ -79,6 +86,10 @@ def search_company(query: str, limit: int = 8) -> list:
     for q in quotes:
         if q.get("quoteType") not in (None, "EQUITY"):
             continue
+        exch = q.get("exchDisp", "") or ""
+        if any(x in exch.upper() for x in ("OTC", "PINK", "GREY")):
+            continue
         name = q.get("shortname") or q.get("longname") or q["symbol"]
-        out.append((q["symbol"], name, q.get("exchDisp", "")))
+        out.append((q["symbol"], name, exch))
+    out.sort(key=lambda t: 0 if any(p.lower() in t[2].lower() for p in PREFERRED) else 1)
     return out

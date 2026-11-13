@@ -114,19 +114,27 @@ with st.sidebar:
             if not cand:
                 cand = [(q.strip().upper(), q.strip().upper(), "direkt als Ticker")]
         if cand:
-            opts = [f"{n} ({s}, {x})" if x else f"{n} ({s})" for s, n, x in cand]
+            opts = [f"{s} · {n} · {x}" if x else f"{s} · {n}" for s, n, x in cand]
             sel = st.selectbox("Treffer", opts, key="ticker_hit")
-            tk = cand[opts.index(sel)][0]
+            first = opts.index(sel)
             if st.button("Jahresabschluss laden", key="btn_ticker"):
-                try:
-                    with st.spinner("Daten werden geladen ..."):
-                        live = cached_fetch(tk)
+                order = [cand[first]] + [c for k, c in enumerate(cand) if k != first][:3]
+                live, last_err = None, None
+                with st.spinner("Daten werden geladen ..."):
+                    for tk, _n, _x in order:
+                        try:
+                            live = cached_fetch(tk)
+                            break
+                        except Exception as e:  # noqa: BLE001
+                            last_err = e
+                if live is not None:
                     st.session_state["pending_fill"] = live["raw"]
                     st.session_state["live_meta"] = live
                     st.session_state["last_src"] = "live"
                     st.rerun()
-                except Exception as e:  # noqa: BLE001
-                    st.error(f"Laden fehlgeschlagen: {e}")
+                else:
+                    st.error(f"Laden fehlgeschlagen: {last_err}. Probiere einen anderen Treffer oder direkt den Ticker "
+                             "(z. B. VOW3.DE).")
         meta = st.session_state.get("live_meta")
         if meta:
             st.success(f"{meta['name']} ({meta['ticker']}), Geschäftsjahr {meta['year']}, Werte in Mio. {meta['currency']}")
