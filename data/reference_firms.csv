@@ -1,2 +1,2 @@
-name,ticker,year,risk_class,revenue,ebit,ebitda,net_income,interest_expense,total_assets,total_liabilities,total_debt,cash,current_assets,current_liabilities,retained_earnings,market_cap,operating_cashflow
-Microsoft,MSFT,2026,A (sehr solide),331839,168985,207519,133749,3051,758376,315989,128808,20935,207710,168825,328265,3898000,182935
+name,ticker,year,risk_class,revenue,ebit,ebitda,net_income,interest_expense,total_assets,total_liabilities,total_debt,cash,current_assets,current_liabilities,retained_earnings,market_cap,operating_cashflow,outcome
+Microsoft,MSFT,2026,A (sehr solide),331839,168985,207519,133749,3051,758376,315989,128808,20935,207710,168825,328265,3898000,182935,keine Notlage

@@ -147,6 +147,21 @@ with tab1:
                 if meta["missing"]:
                     st.warning("Nicht verfügbar, bitte selbst ergänzen: " + ", ".join(LABELS[k] for k in meta["missing"]))
             st.caption("Quelle: Yahoo Finance über yfinance. Werte gegenprüfen, Marktkapitalisierung ist der aktuelle Stand.")
+        ref_path = ROOT / "data" / "reference_firms.csv"
+        if ref_path.exists():
+            with st.expander("Referenzfirmen (echte Abschlüsse)", expanded=False):
+                ref = pd.read_csv(ref_path)
+                lab = [f"{r['name']} ({r['year']}), {r['risk_class']}" for _, r in ref.iterrows()]
+                pick = st.selectbox("Firma", lab, key="ref_pick")
+                row = ref.iloc[lab.index(pick)]
+                if st.button("Diese Firma analysieren", key="btn_ref"):
+                    st.session_state["pending_fill"] = {c: float(row[c]) for c in RAW_COLUMNS}
+                    st.session_state["ref_meta"] = row.to_dict()
+                    st.rerun()
+                rm = st.session_state.get("ref_meta")
+                if rm:
+                    st.caption(f"Geladen: {rm['name']}, Werte in Mio. USD. Tatsächlicher Ausgang im Folgejahr: "
+                               f"{rm.get('outcome', 'unbekannt')}.")
         st.selectbox("Startwerte", list(PRESETS), key="preset", on_change=apply_preset)
         vals = {}
         st.markdown("**Jahresabschluss (Mio.)**")
