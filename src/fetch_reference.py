@@ -15,7 +15,7 @@ FIRMS = [
     ("JNJ", "A (sehr solide)", "keine Notlage"), ("T", "BBB (mittel)", "keine Notlage"),
     ("F", "BB (mittel)", "keine Notlage"), ("BA", "B (angeschlagen)", "Verlust, kein Ausfall"),
     ("UAL", "B (angeschlagen)", "keine Notlage"), ("AMC", "CCC (kritisch)", "Notlage"),
-    ("BYND", "CCC (kritisch)", "Notlage"), ("CVNA", "B (angeschlagen)", "keine Notlage"),
+    ("CVNA", "B (angeschlagen)", "keine Notlage"),
 ]
 
 
