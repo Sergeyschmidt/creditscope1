@@ -11,15 +11,18 @@ import streamlit as st
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "src"))
+import ui  # noqa: E402
 import viz  # noqa: E402
 from analysis import (SCENARIOS, Blend, apply_shocks, feature_curve, heatmap_grid, implied_cost_of_debt,  # noqa: E402
                       percentile_better, predict_many, rating_breaks, revenue_curve, run_scenarios,
                       score_portfolio)
 from features import (FEATURE_BETTER, FEATURE_FORMULA, FEATURE_INFO, FEATURES, RAW_COLUMNS,  # noqa: E402
                       altman_z, compute_features, pd_to_rating)
+from data_live import fetch_latest  # noqa: E402
 from llm import extract_financials, get_client, get_model, write_memo  # noqa: E402
 
 st.set_page_config(page_title="CreditScope", page_icon="📉", layout="wide")
+ui.inject_css()
 
 
 @st.cache_resource
@@ -110,11 +113,15 @@ def score(raw: pd.DataFrame):
     return X, model.predict_proba(X)[:, 1]
 
 
-st.title("📉 CreditScope")
-st.caption("Kreditrisiko-Scoring mit erklärbarem Machine Learning: Wahrscheinlichkeit einer Notlage im Folgejahr")
-if metrics["data_source"] == "synthetic":
-    st.warning("Das Modell wurde mit **synthetischen Demo-Daten** trainiert. Für belastbare Ergebnisse "
-               "echte Daten mit `src/data_fetch.py` laden und neu trainieren.")
+@st.cache_data(ttl=3600, show_spinner=False)
+def cached_fetch(ticker: str):
+    return fetch_latest(ticker)
+
+
+ui.hero("Wie wahrscheinlich gerät ein Unternehmen im Folgejahr in Zahlungsnot? Erklärbares Machine Learning, "
+        "Stresstests und Portfolio-Sicht in einem Werkzeug.",
+        ["Gradient Boosting + Regression", "SHAP-Erklärung", "Szenarien", "Claude-API"],
+        "Demo-Daten (synthetisch)" if metrics["data_source"] == "synthetic" else None)
 
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
     ["Analyse", "Szenarien & Stress", "Portfolio", "Modellqualität", "KI-Assistent (Claude)", "Methodik"])
@@ -123,6 +130,23 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
 with tab1:
     left, right = st.columns([1, 1.5])
     with left:
+        with st.expander("Live-Daten per Börsenticker laden", expanded=False):
+            tk = st.text_input("Ticker", placeholder="z. B. SAP.DE, VOW3.DE, AAPL", key="ticker_in")
+            if st.button("Jahresabschluss laden", key="btn_ticker") and tk.strip():
+                try:
+                    with st.spinner("Daten werden geladen ..."):
+                        live = cached_fetch(tk.strip())
+                    st.session_state["pending_fill"] = live["raw"]
+                    st.session_state["live_meta"] = live
+                    st.rerun()
+                except Exception as e:  # noqa: BLE001
+                    st.error(f"Laden fehlgeschlagen: {e}")
+            meta = st.session_state.get("live_meta")
+            if meta:
+                st.success(f"{meta['name']} ({meta['ticker']}), Geschäftsjahr {meta['year']}, Werte in Mio. {meta['currency']}")
+                if meta["missing"]:
+                    st.warning("Nicht verfügbar, bitte selbst ergänzen: " + ", ".join(LABELS[k] for k in meta["missing"]))
+            st.caption("Quelle: Yahoo Finance über yfinance. Werte gegenprüfen, Marktkapitalisierung ist der aktuelle Stand.")
         st.selectbox("Startwerte", list(PRESETS), key="preset", on_change=apply_preset)
         vals = {}
         st.markdown("**Jahresabschluss (Mio.)**")
@@ -140,10 +164,7 @@ with tab1:
     drv = {"gb": sv.values, "lr": lr_c, "ens": (sv.values + lr_c) / 2}[MODE]
 
     with right:
-        m1, m2, m3 = st.columns(3)
-        m1.metric("Ausfallwahrscheinlichkeit", f"{pdv:.1%}")
-        m2.metric("Rating (intern)", rating)
-        m3.metric("Altman Z (Vergleich)", f"{z:.2f}", zone, delta_color="off")
+        ui.kpi_cards(pdv, rating, z, zone)
         st.plotly_chart(viz.drivers_bar(LABELS_F, drv[0]), key="drivers_chart", on_select=pick_chart,
                         selection_mode="points", width="stretch")
 

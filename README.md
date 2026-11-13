@@ -36,6 +36,14 @@ Tickerliste in `src/data_fetch.py` erweitern (Ziel: 300+ Firmen). Ergebnis nach 
 
 Scoring-Modell in der Seitenleiste wählbar: Ensemble (Standard), Gradient Boosting oder Logistische Regression.
 
+## Daten beschaffen
+| Weg | Wofür | Wie |
+|---|---|---|
+| Ticker-Eingabe in der App | einzelne Firma live scoren | Analyse-Tab -> "Live-Daten per Börsenticker laden" (Yahoo Finance über yfinance) |
+| CSV-Upload | ganzes Kreditportfolio | Portfolio-Tab, Spalten wie in der App beschrieben |
+| Geschäftsbericht (Claude) | Zahlen aus PDF/Text | KI-Assistent-Tab, Ergebnis wird in die Felder übernommen |
+| Trainingsdaten | echtes Modell statt Demo | `python src/data_fetch.py` (300+ Ticker), dann `python src/train.py`, `models/` und `data/` neu pushen |
+
 ## Claude API (KI-Assistent)
 Tab "KI-Assistent": liest Zahlen aus Geschäftsbericht-Text/PDF und schreibt ein Kreditmemo.
 1. API-Schlüssel auf console.anthropic.com erzeugen (eigenes Guthaben nötig, getrennt vom Claude-Abo).
@@ -49,6 +57,8 @@ Hinweis: Die statische HTML-Version in `web/` nutzt die API nicht, weil ein Schl
 |---|---|
 | `src/analysis.py` | Stresstest, Szenarien, Portfolio, Ensemble |
 | `src/viz.py` | Plotly-Grafiken |
+| `src/ui.py` | Optik: CSS, Kopfbereich, Kennzahlen-Karten |
+| `src/data_live.py` | Live-Jahresabschluss per Ticker |
 | `src/features.py` | Kennzahlen, Altman Z, Rating-Skala |
 | `src/data_fetch.py` | echte Daten über yfinance, Label aus Jahr t+1 |
 | `src/make_demo_data.py` | synthetischer Testdatensatz |

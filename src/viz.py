@@ -4,16 +4,21 @@ import pandas as pd
 import plotly.graph_objects as go
 from sklearn.metrics import roc_auc_score, roc_curve
 
-GOOD, BAD, ACCENT, NEUTRAL = "#2e7d4f", "#b3372c", "#1f6fb2", "#8a94a3"
-RATING_COLORS = {"A": "#2e7d4f", "BBB": "#6aa84f", "BB": "#d4a72c", "B": "#e07b39", "CCC": "#c4472f", "D-Gefahr": "#8e1b1b"}
+GOOD, BAD, ACCENT, NEUTRAL = "#1e8e5a", "#d64545", "#0d5c63", "#9aa8b8"
+RATING_COLORS = {"A": "#1e8e5a", "BBB": "#5fa043", "BB": "#c98a1b", "B": "#dc7a33", "CCC": "#cf4a3a", "D-Gefahr": "#9b1c1c"}
 RATING_ORDER = ["A", "BBB", "BB", "B", "CCC", "D-Gefahr"]
 THRESHOLDS = [(0.005, "A/BBB"), (0.015, "BBB/BB"), (0.04, "BB/B"), (0.10, "B/CCC"), (0.25, "CCC/D")]
 
 
 def _fig(h=320, title=None):
     f = go.Figure()
-    f.update_layout(height=h, margin=dict(l=10, r=10, t=40 if title else 15, b=10), title=title,
-                    legend=dict(orientation="h", y=-0.2), hoverlabel=dict(font_size=13))
+    f.update_layout(height=h, margin=dict(l=14, r=14, t=48 if title else 15, b=12),
+                    title=dict(text=title, x=0.01, font=dict(size=15, color="#0e1b2c")) if title else None,
+                    font=dict(family="DM Sans, system-ui, sans-serif", size=12.5, color="#34465a"),
+                    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                    legend=dict(orientation="h", y=-0.22), hoverlabel=dict(font_size=13, bgcolor="white", bordercolor="#e3e8ee"))
+    f.update_xaxes(gridcolor="#eceff3", zerolinecolor="#cdd5de", linecolor="#e3e8ee")
+    f.update_yaxes(gridcolor="#eceff3", zerolinecolor="#cdd5de", linecolor="#e3e8ee")
     return f
 
 
@@ -66,7 +71,7 @@ def revenue_curve_fig(curve, current_shock, current_pd):
 def heatmap_fig(rev, rate, p):
     f = _fig(340, "PD-Landkarte: Umsatz × Zinsanstieg")
     f.add_heatmap(x=[f"{r:+.0%}" for r in rev], y=[f"+{k:.0f} pp" for k in rate], z=p * 100,
-                  colorscale=[[0, "#2e7d4f"], [0.15, "#d4a72c"], [0.5, "#e07b39"], [1, "#8e1b1b"]],
+                  colorscale=[[0, "#2e7d4f"], [0.15, "#c98a1b"], [0.5, "#e07b39"], [1, "#8e1b1b"]],
                   zmin=0, zmax=max(40, float(p.max() * 100)),
                   hovertemplate="Umsatz %{x}, Zins %{y}<br>PD %{z:.1f} %<extra></extra>",
                   colorbar=dict(title="PD %"))
@@ -85,7 +90,7 @@ def scenario_bar(df):
 
 def roc_fig(y, p_gb, p_lr, p_ens=None):
     f = _fig(340, "ROC-Kurve (Testdaten)")
-    for name, p, col in [("Gradient Boosting", p_gb, ACCENT), ("Logistische Regression", p_lr, "#d4a72c")] + ([("Ensemble", p_ens, "#2e7d4f")] if p_ens is not None else []):
+    for name, p, col in [("Gradient Boosting", p_gb, ACCENT), ("Logistische Regression", p_lr, "#c98a1b")] + ([("Ensemble", p_ens, "#2e7d4f")] if p_ens is not None else []):
         fpr, tpr, _ = roc_curve(y, p)
         f.add_scatter(x=fpr, y=tpr, mode="lines", name=f"{name} (AUC {roc_auc_score(y, p):.3f})", line=dict(color=col, width=3))
     f.add_scatter(x=[0, 1], y=[0, 1], mode="lines", line=dict(color=NEUTRAL, dash="dash"), name="Zufall")
