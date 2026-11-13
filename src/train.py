@@ -20,7 +20,7 @@ from sklearn.model_selection import GroupShuffleSplit
 from sklearn.preprocessing import StandardScaler
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from features import FEATURES, FEATURE_INFO, compute_features  # noqa: E402
+from features import FEATURES, FEATURE_INFO, compute_features, altman_z  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data" / "panel.csv"
@@ -53,7 +53,7 @@ def main():
     }
     print(json.dumps(metrics, indent=2))
 
-    pd.DataFrame({"y": yte.values, "p_gb": p_gb, "p_lr": p_lr}).to_csv(MODELS / "test_preds.csv", index=False)
+    pd.DataFrame({"y": yte.values, "p_gb": p_gb, "p_lr": p_lr, "z": altman_z(df.iloc[te]).values}).to_csv(MODELS / "test_preds.csv", index=False)
     joblib.dump({"scaler": sc, "lr": lr}, MODELS / "lr_model.joblib")
     joblib.dump({"model": gb, "features": FEATURES}, MODELS / "gb_model.joblib")
     (MODELS / "metrics.json").write_text(json.dumps(metrics, indent=2))

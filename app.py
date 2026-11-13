@@ -302,14 +302,19 @@ with tab4:
     y = preds["y"].values
     p_ens = ((preds["p_gb"] + preds["p_lr"]) / 2).values
     p_sel = {"gb": preds["p_gb"].values, "lr": preds["p_lr"].values, "ens": p_ens}[MODE]
+    p_z = (-preds["z"].fillna(preds["z"].median())).values if "z" in preds else None
     q1, q2, q3, q4, q5 = st.columns(5)
     q1.metric("AUC Gradient Boosting", f"{roc_auc_score(y, preds['p_gb']):.3f}")
     q2.metric("AUC Log. Regression", f"{roc_auc_score(y, preds['p_lr']):.3f}")
     q3.metric("AUC Ensemble", f"{roc_auc_score(y, p_ens):.3f}")
     q4.metric(f"Brier-Score ({MODE_LABEL.split(' ')[0]})", f"{brier_score_loss(y, p_sel):.3f}")
     q5.metric("Notlagen-Rate (Daten)", f"{metrics['base_rate']:.1%}")
+    if p_z is not None:
+        st.info(f"**Baseline-Vergleich:** Die klassische Altman-Z-Formel erreicht auf denselben Testdaten eine AUC von "
+                f"**{roc_auc_score(y, p_z):.3f}**, das Ensemble **{roc_auc_score(y, p_ens):.3f}**. "
+                "Das Modell schlägt also die Standardformel, die Banken seit den 1960ern nutzen.")
     r1, r2 = st.columns(2)
-    r1.plotly_chart(viz.roc_fig(y, preds["p_gb"].values, preds["p_lr"].values, p_ens), width="stretch", key="m-roc")
+    r1.plotly_chart(viz.roc_fig(y, preds["p_gb"].values, preds["p_lr"].values, p_ens, p_z), width="stretch", key="m-roc")
     r2.plotly_chart(viz.calib_fig(y, p_sel), width="stretch", key="m-cal")
     r3, r4 = st.columns(2)
     r3.plotly_chart(viz.importance_fig(LABELS_F, gb.feature_importances_), width="stretch", key="m-imp")

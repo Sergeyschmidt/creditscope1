@@ -88,9 +88,9 @@ def scenario_bar(df):
     return f
 
 
-def roc_fig(y, p_gb, p_lr, p_ens=None):
+def roc_fig(y, p_gb, p_lr, p_ens=None, p_z=None):
     f = _fig(340, "ROC-Kurve (Testdaten)")
-    for name, p, col in [("Gradient Boosting", p_gb, ACCENT), ("Logistische Regression", p_lr, "#c98a1b")] + ([("Ensemble", p_ens, "#2e7d4f")] if p_ens is not None else []):
+    for name, p, col in [("Gradient Boosting", p_gb, ACCENT), ("Logistische Regression", p_lr, "#c98a1b")] + ([("Ensemble", p_ens, "#2e7d4f")] if p_ens is not None else []) + ([("Altman-Z (Baseline)", p_z, "#7a7f8a")] if p_z is not None else []):
         fpr, tpr, _ = roc_curve(y, p)
         f.add_scatter(x=fpr, y=tpr, mode="lines", name=f"{name} (AUC {roc_auc_score(y, p):.3f})", line=dict(color=col, width=3))
     f.add_scatter(x=[0, 1], y=[0, 1], mode="lines", line=dict(color=NEUTRAL, dash="dash"), name="Zufall")
