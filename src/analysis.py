@@ -134,12 +134,27 @@ class Blend:
     aussagekräftigsten.
     """
 
-    def __init__(self, gb, lr_bundle, mode="ens"):
+    def __init__(self, gb, lr_bundle, mode="ens", train_rate=None, target_rate=None):
         self.gb, self.sc, self.lr, self.mode = gb, lr_bundle["scaler"], lr_bundle["lr"], mode
+        self.train_rate, self.target_rate = train_rate, target_rate
 
     def predict_proba(self, X):
         X = X[FEATURES]
         p_gb = self.gb.predict_proba(X)[:, 1]
         p_lr = self.lr.predict_proba(self.sc.transform(X))[:, 1]
         p = {"gb": p_gb, "lr": p_lr, "ens": (p_gb + p_lr) / 2}[self.mode]
+        if self.train_rate and self.target_rate:
+            p = recalibrate(p, self.train_rate, self.target_rate)
         return np.column_stack([1 - p, p])
+
+
+def recalibrate(p, train_rate, target_rate):
+    """Prior-Korrektur: rechnet PDs von der Notlagenrate der Trainingsdaten auf eine realistische Rate um.
+
+    Die Trainingsdaten enthalten absichtlich viele angeschlagene Firmen (Notlagenrate ca. 20 %).
+    Ohne Korrektur wären alle PDs zu hoch. Die Rangfolge der Firmen (AUC) ändert sich dadurch nicht.
+    """
+    p = np.clip(np.asarray(p, dtype=float), 1e-6, 1 - 1e-6)
+    a = target_rate / train_rate
+    b = (1 - target_rate) / (1 - train_rate)
+    return p * a / (p * a + (1 - p) * b)

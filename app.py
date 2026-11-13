@@ -62,6 +62,8 @@ LABELS = {
 
 # ---------- Zustand und Callbacks ----------
 def apply_preset():
+    if st.session_state["preset"] not in PRESETS:
+        return
     for c in RAW_COLUMNS:
         st.session_state[f"in-{c}"] = float(PRESETS[st.session_state["preset"]][c])
 
@@ -86,6 +88,7 @@ if "detail_feat" not in st.session_state:
     st.session_state["detail_feat"] = FEATURE_INFO["interest_coverage"][0]
 pending = st.session_state.pop("pending_fill", None)  # Werte aus der KI-Auslesung übernehmen
 if pending:
+    st.session_state["preset"] = "Eigene Werte"
     for c in RAW_COLUMNS:
         if pending.get(c) is not None:
             st.session_state[f"in-{c}"] = float(pending[c])
@@ -163,6 +166,11 @@ with st.sidebar:
                           help="Gradient Boosting rechnet stufenförmig, die logistische Regression glatt. "
                                "Das Ensemble reagiert in Szenarien am aussagekräftigsten.")
     MODE = {"Ensemble (Ø beider Modelle)": "ens", "Gradient Boosting": "gb", "Logistische Regression": "lr"}[MODE_LABEL]
+    st.header("Kalibrierung")
+    TARGET = st.slider("Realistische Ausfallrate (%)", 0.5, 10.0, 3.0, 0.5,
+                       help=f"Die Trainingsdaten enthalten {metrics['base_rate']:.0%} Notlagen, weil bewusst viele "
+                            "angeschlagene Firmen dabei sind. Die PD wird auf diese realistische Rate umgerechnet. "
+                            "Die Rangfolge der Firmen ändert sich dadurch nicht.") / 100
     st.header("Annahmen")
     lgd = st.slider("Verlustquote bei Ausfall (LGD)", 10, 90, 45, 5, help="Anteil des Kredits, der im Ausfall verloren geht") / 100
     rf = st.slider("Risikoloser Zins (%)", 0.0, 6.0, 3.0, 0.25) / 100
@@ -171,7 +179,7 @@ with st.sidebar:
     st.caption("Diese Annahmen wirken auf Szenarien, Portfolio und Fremdkapitalkosten.")
 
 
-model = Blend(gb, lrb, MODE)
+model = Blend(gb, lrb, MODE, train_rate=metrics["base_rate"], target_rate=TARGET)
 
 
 def score(raw: pd.DataFrame):
@@ -195,7 +203,7 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
 with tab1:
     left, right = st.columns([1, 1.5])
     with left:
-        st.selectbox("Startwerte", list(PRESETS), key="preset", on_change=apply_preset)
+        st.selectbox("Startwerte", list(PRESETS) + ["Eigene Werte"], key="preset", on_change=apply_preset)
         vals = {}
         st.markdown("**Jahresabschluss (Mio.)**")
         cols = st.columns(2)
@@ -476,6 +484,8 @@ Aufteilung nach Unternehmen (Train {metrics['n_train']} / Test {metrics['n_test'
 **Kennzahlen:** {', '.join(LABELS_F)}.
 
 **Stresstest:** Umsatzänderung wirkt über die Deckungsbeitragsquote auf EBIT, EBITDA und Cashflow. Der Zinsanstieg trifft alle Finanzschulden. Ergebnisänderungen nach Steuern verändern Rücklagen und Eigenkapital. Das ist eine bewusste Vereinfachung.
+
+**Kalibrierung:** Die Trainingsdaten enthalten überdurchschnittlich viele Notlagen. Alle angezeigten PDs werden per Prior-Korrektur auf die realistische Ausfallrate aus der Seitenleiste umgerechnet (Standard 3 %). Die Rangfolge und die AUC bleiben gleich. Der Tab „Modellqualität“ zeigt die unkorrigierten Testwerte, weil dort gegen die Notlagenrate der Testdaten geprüft wird.
 
 **Expected Loss:** PD × LGD × Exposure. Die LGD ist eine Annahme der Seitenleiste, kein geschätzter Wert.
 
