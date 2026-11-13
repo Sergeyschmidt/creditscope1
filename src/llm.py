@@ -70,9 +70,9 @@ def extract_financials(text: str, client, model: str = DEFAULT_MODEL) -> dict:
     """Liest Kennzahlen aus Berichtstext. Fehlende Werte kommen als None zurück."""
     msg = client.messages.create(
         model=model, max_tokens=1500,
-        tools=[EXTRACT_TOOL], tool_choice={"type": "tool", "name": "record_financials"},
+        tools=[EXTRACT_TOOL], tool_choice={"type": "auto"},
         messages=[{"role": "user", "content":
-                   "Lies die folgenden Auszüge aus einem Geschäftsbericht und trage die Kennzahlen des "
+                   "Rufe das Werkzeug record_financials auf. Lies die folgenden Auszüge aus einem Geschäftsbericht und trage die Kennzahlen des "
                    "letzten Geschäftsjahres in Millionen der Berichtswährung ein. Rechne Tausend/Milliarden um. "
                    "Erfinde nichts: Was nicht im Text steht oder sich nicht eindeutig ableiten lässt, bleibt null. "
                    "Nenne in 'evidence', was abgeleitet wurde.\n\n<bericht>\n" + text[:60000] + "\n</bericht>"}],
